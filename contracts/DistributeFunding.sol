@@ -1,11 +1,11 @@
 // "SPDX-License-Identifier: UNLICENSED"
-pragma solidity ^0.7.4;
+pragma solidity ^0.7.0;
 
-import "Ownable.sol";
+import "contracts/Ownable.sol";
 
 contract DistributeFunding is Ownable {
     
-    address crowdFundingOwner;
+    address crowdFundingContractAddress;
     uint totalShares;
     uint leftShares;
     address payable[] shareHolders;
@@ -15,11 +15,11 @@ contract DistributeFunding is Ownable {
         totalShares = _totalShares;
         leftShares = _totalShares;
         // by default, the contract's owner is also the crowdFundingOwner
-        crowdFundingOwner = owner;
+        crowdFundingContractAddress = owner;
     }
     
-    modifier onlyCrowdFundingOwner() {
-        require(msg.sender == crowdFundingOwner, "Caller is not crowdFundingOwner");
+    modifier onlyCrowdFundingContract() {
+        require(msg.sender == crowdFundingContractAddress, "Caller is not crowdFundingContractAddress");
         _;
     }
     
@@ -64,30 +64,20 @@ contract DistributeFunding is Ownable {
         return shares[msg.sender] * 100 / (totalShares - leftShares);
     }
     
-    function setCrowdFundingOwner(address _crowdFundingOwner) public onlyOwner {
-        crowdFundingOwner = _crowdFundingOwner;
+    function getCrowdFundingContractAddress() public view onlyOwner returns (address){
+        return crowdFundingContractAddress;
     }
     
-    function getCrowdFundingOwner() public view returns (address){
-        return crowdFundingOwner;
+    function setCrowdFundingContractAddress(address payable _newCrowdFundingContractAddress) public onlyOwner {
+        crowdFundingContractAddress = _newCrowdFundingContractAddress;
     }
     
-    function distributeFunding() public payable onlyCrowdFundingOwner {
+    function distributeFunding() public payable onlyCrowdFundingContract {
         uint founds = msg.value;
         uint accumulatedShares = totalShares - leftShares;
         for (uint i = 0; i<shareHolders.length; i++){
             shareHolders[i].transfer(founds * shares[shareHolders[i]] / accumulatedShares);
         }
         
-    }
-    
-    function resetContract(uint _totalShares) public onlyOwner {
-        totalShares = _totalShares;
-        leftShares = _totalShares;
-        for (uint i = 0; i<shareHolders.length; i++){
-            shares[shareHolders[i]] = 0;
-        }
-        delete shareHolders;
-        crowdFundingOwner = owner;
     }
 }

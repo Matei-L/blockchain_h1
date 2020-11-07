@@ -1,7 +1,8 @@
 // "SPDX-License-Identifier: UNLICENSED"
-pragma solidity ^0.7.4;
+pragma solidity ^0.7.0;
 
-import "h1/Ownable.sol";
+import "contracts/Ownable.sol";
+import "contracts/DistributeFunding.sol";
 
 contract CrowdFunding is Ownable {
     
@@ -10,13 +11,7 @@ contract CrowdFunding is Ownable {
     
     uint fundingGoal;
     uint totalFundsReceived;
-    
-    constructor(uint _fundingGoal) {
-        
-        state = State.TARGET_NOT_REACHED;
-        fundingGoal = _fundingGoal;
-        totalFundsReceived = 0;
-    }
+    DistributeFunding distributeFundingContract;
     
     struct Contributor {
         string name;
@@ -25,9 +20,22 @@ contract CrowdFunding is Ownable {
     }
     mapping(address => Contributor) contributors;
     
+    
+    
+    constructor(uint _fundingGoal, DistributeFunding _distributeFundingContract) {
+        
+        state = State.TARGET_NOT_REACHED;
+        fundingGoal = _fundingGoal;
+        totalFundsReceived = 0;
+        distributeFundingContract = _distributeFundingContract;
+    }
+    
     function distributeFunding() public onlyOwner {
-        
-        
+        if (state != State.TARGET_REACHED) {
+            revert(getState());
+        }
+        distributeFundingContract.distributeFunding{value:fundingGoal}();
+        state = State.CLOSED;
     }
     
     function contribute() public payable {
@@ -79,7 +87,7 @@ contract CrowdFunding is Ownable {
         if(state == State.TARGET_REACHED) {
             
             return "Target reached!";
-        } else if (state == CLOSED) {
+        } else if (state == State.CLOSED) {
             
             return "Target reached! Funding Closed!";
         }
