@@ -61,6 +61,7 @@ contract DistributeFunding is Ownable {
     }
     
     function checkMyPercentage() public view returns (uint) {
+        require(totalShares > leftShares, "No shares distributed!");
         return shares[msg.sender] * 100 / (totalShares - leftShares);
     }
     
@@ -73,6 +74,7 @@ contract DistributeFunding is Ownable {
     }
     
     function distributeFunding() public payable onlyCrowdFundingContract {
+        require(totalShares > leftShares, "No shares distributed!");
         uint founds = msg.value;
         uint accumulatedShares = totalShares - leftShares;
         for (uint i = 0; i<shareHolders.length; i++){
